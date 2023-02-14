@@ -19,7 +19,7 @@ public class AStarAgent extends Agent {
   * A class to represent the location of an object in a map. Stores x, y position as well as the MapLocation
   * that came before it (for path searching), f(n) and g(n) of the node.
   **/
-    class MapLocation
+    class MapLocation implements Comparable<MapLocation>
     {
         public int x, y, pathCost;
         public MapLocation cameFrom;
@@ -79,6 +79,13 @@ public class AStarAgent extends Agent {
         public int hashCode() { 
          return (int)(this.x * this.x * this.y * this.y * this.y); //avoided Math.pow() for speed.
         }
+
+        /**
+         *  A MapLocation will have greater priority if it's cost is lesser
+         */
+		public int compareTo(MapLocation o) {
+			return (int) (this.cost - o.cost);
+		}
         
     }
     
@@ -368,71 +375,82 @@ public class AStarAgent extends Agent {
     private Stack<MapLocation> AstarSearch(MapLocation start, MapLocation goal, int xExtent, int yExtent, 
     									   MapLocation enemyFootmanLoc, Set<MapLocation> resourceLocations)
     {
-    	System.out.println(start);
-    	System.out.println(goal);
-    	System.out.println(enemyFootmanLoc);
-    	
-    	System.out.println(start.cost);
-    	System.out.println(start.pathCost);
 
+    	PriorityQueue<MapLocation> toCheck = new PriorityQueue<MapLocation>();
+    	ArrayList<MapLocation> checked = new ArrayList<MapLocation>();
 
-    	
-    	// STEPS:
-    	// Consider max 8 directions(child states) that our footman can go toward
-    	// For each child state, see if there is a resource blocking, if so, don't consider that direction/state
-    	// For each remaining child state, calculate the total utility = (path cost from start to curr state) + (heuristic) 
-    	// 		When calculating path cost for child state, it is equal to parent's path cost + cost to move from parent to child state
-    	// 		So, path cost = parent path cost + 1
-    	// We will choose the child state with the LOWEST utility and add it to our path stack!
-    	
-    	// Get all possible moves
-    	// RULES: Cannot move to obstacle, move to child state that is closest to townhall
-    	
-    	int curX = start.x;
-    	int curY = start.y;
-    	
-    	ArrayList<MapLocation> neighbors = getAndCheckNeighbors(start.pathCost, start, goal, xExtent, yExtent, enemyFootmanLoc, resourceLocations);
-    	
-    	// select best neighbor
-    	MapLocation bestChoice = null;
-    	for (MapLocation n : neighbors) {
-    		if (bestChoice == null) {
-    			bestChoice = n;
-    		} else {
-    			
-    			// Choose child state w/ lowest cost
-    			if (n.cost < bestChoice.cost) {
-    				bestChoice = n;
-    			}
+    	toCheck.add(start);
+    	    	
+    	MapLocation finalState = null;
+
+    	while (!toCheck.isEmpty()) {
+    		
+    		MapLocation currState = toCheck.poll();
+    		
+    		// Stop of townhall reached!
+    		if (currState.equals(goal)) {
+    			System.out.println("GOAL REACHED!");
+    			finalState = currState;
+    			break;
     		}
+    		
+    		ArrayList<MapLocation> neighbors = getAndCheckNeighbors(currState.pathCost, currState, goal, xExtent, yExtent, enemyFootmanLoc, resourceLocations);
+        	
+        	for (MapLocation n : neighbors) {
+        		
+        		
+        		// NOTE: Everything seemed to be working without the iterative checks!
+        		
+        		boolean skip = false;
+        		
+        		// CHECK IF n IN toCheck LIST, if it has a lower total cost than n, skip n
+        		Iterator<MapLocation> toChkIter = toCheck.iterator();
+        		
+				while (toChkIter.hasNext()) {
+					MapLocation node = toChkIter.next();
+					if (node.equals(n) && node.cost < n.cost) {
+						skip = true;
+					}
+				}
+				
+				if (!skip) {
+					// CHECK IF n IN checked LIST, if it has a lower total cost than n, skip n
+					Iterator<MapLocation> chkdIter = checked.iterator();
+					
+					while (chkdIter.hasNext()) {
+						MapLocation node = chkdIter.next();
+						if (node.equals(n) && node.cost < n.cost) {
+							skip = true;
+						}
+					}
+				}
+        		
+				// Add neighbor to toCheck list if conditions are met
+				if (!skip) {
+	            	toCheck.add(n);        		
+				}
+        	}
+        	
+        	System.out.println(toCheck.size());
+        	System.out.println(toCheck.peek());
+        	
+        	checked.add(currState);
     	}
     	
-    	System.out.println(neighbors);
-    	System.out.println(bestChoice);
-
-    	
-    	neighbors = getAndCheckNeighbors((int)bestChoice.cost, bestChoice, goal, xExtent, yExtent, enemyFootmanLoc, resourceLocations);
-
-    	bestChoice = null;
-    	for (MapLocation n : neighbors) {
-    		if (bestChoice == null) {
-    			bestChoice = n;
-    		} else {
-    			
-    			// Choose child state w/ lowest cost
-    			if (n.cost < bestChoice.cost) {
-    				bestChoice = n;
-    			}
-    		}
-    	}
-    	
-    	System.out.println(neighbors);
-    	System.out.println(bestChoice);
+    	// Stack to return
+    	Stack<MapLocation> path = new Stack<MapLocation>();
     	
     	
-    	
-    	
-     	return new Stack<MapLocation>();
+    	if (finalState == null) {
+    		System.out.println("No solutions found :(");
+    	} else {
+    		// Get path!	
+        	path = tracePath(start, finalState, new Stack<MapLocation>());
+    		System.out.println(path);
+       	}
+ 
+ 
+     	return path;
     }
     
     /**
