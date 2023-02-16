@@ -19,31 +19,25 @@ public class AStarAgent extends Agent {
   * A class to represent the location of an object in a map. Stores x, y position as well as the MapLocation
   * that came before it (for path searching), f(n) and g(n) of the node.
   **/
-    class MapLocation implements Comparable<MapLocation>
+    class MapLocation // implements Comparable<MapLocation>
     {
         public int x, y, pathCost;
         public MapLocation cameFrom;
-        public float cost;
 
-        public MapLocation(int x, int y, MapLocation cameFrom, float cost)
+        public MapLocation(int x, int y, MapLocation cameFrom)
         {
             this.x = x;
             this.y = y;
             this.cameFrom = cameFrom;
-            this.cost = cost;
-//            if (cameFrom == null) {
-            	this.pathCost = 0;
-//            } else {
-//                this.pathCost = (int) (cameFrom.pathCost + cost);
-//            }
+            this.pathCost = 0;
+
         }
         
-        public MapLocation(int x, int y, MapLocation cameFrom, float cost, int pathCost)
+        public MapLocation(int x, int y, MapLocation cameFrom, int pathCost)
         {
             this.x = x;
             this.y = y;
             this.cameFrom = cameFrom;
-            this.cost = cost;
             this.pathCost = pathCost;
         }
                         
@@ -51,7 +45,7 @@ public class AStarAgent extends Agent {
          * for printing purposes.
          */
         @Override
-        public String toString() {return "("+this.x+", "+this.y+", "+this.cost+", "+this.pathCost+")";}
+        public String toString() {return "("+this.x+", "+this.y+", "+this.pathCost+")";}
         
         /**
          * Nodes are equal if they have equivalent x and y positions.
@@ -82,10 +76,27 @@ public class AStarAgent extends Agent {
 
         /**
          *  A MapLocation will have greater priority if it's cost is lesser
+         *  
+         *  Returns -1, 0 or 1
+         *  Use pathCost
          */
+        /**
+         * 
+         *
 		public int compareTo(MapLocation o) {
-			return (int) (this.cost - o.cost);
+			
+			
+//			return (int) this.pathCost - o.pathCost;
+			
+			if (this.pathCost < o.pathCost) {
+				return -1;
+			} else if (o.pathCost < this.pathCost) {
+				return 1;
+			} else {
+				return 0;
+			}
 		}
+		*/
         
     }
     
@@ -287,7 +298,10 @@ public class AStarAgent extends Agent {
      */
     private boolean shouldReplanPath(State.StateView state, History.HistoryView history, Stack<MapLocation> currentPath)
     {
-    	return false;
+    	Unit.UnitView enemyFootmanUnit = state.getUnit(enemyFootmanID);
+        MapLocation enemyLoc = new MapLocation(enemyFootmanUnit.getXPosition(), enemyFootmanUnit.getYPosition(), null, 0);
+        
+        return currentPath.contains(enemyLoc);
     }
 
     /**
@@ -376,16 +390,36 @@ public class AStarAgent extends Agent {
     									   MapLocation enemyFootmanLoc, Set<MapLocation> resourceLocations)
     {
 
-    	PriorityQueue<MapLocation> toCheck = new PriorityQueue<MapLocation>();
-    	ArrayList<MapLocation> checked = new ArrayList<MapLocation>();
+    	PriorityQueue<MapLocation> toCheck = new PriorityQueue<MapLocation>(1, new Comparator<MapLocation>() {
+
+    		public int compare(MapLocation o1, MapLocation o2) {
+    			int order; 
+    			
+    			if (o1.pathCost < o2.pathCost) {
+    				order = -1;
+    			} else if (o1.pathCost > o2.pathCost) {
+    				order = 1;
+    			} else {
+    				order = 0;
+    			}
+    			
+				return order;
+			}
+    		
+    	});
+    	HashSet<MapLocation> checked = new HashSet<MapLocation>();
+    	HashMap<MapLocation, Integer> mapLocToBestCost = new HashMap<MapLocation, Integer>();
 
     	toCheck.add(start);
+    	mapLocToBestCost.put(start,start.pathCost);
     	    	
     	MapLocation finalState = null;
 
     	while (!toCheck.isEmpty()) {
     		
     		MapLocation currState = toCheck.poll();
+        	checked.add(currState);
+
     		
     		// Stop of townhall reached!
     		if (currState.equals(goal)) {
@@ -394,47 +428,56 @@ public class AStarAgent extends Agent {
     			break;
     		}
     		
-    		ArrayList<MapLocation> neighbors = getAndCheckNeighbors(currState.pathCost, currState, goal, xExtent, yExtent, enemyFootmanLoc, resourceLocations);
+    		ArrayList<MapLocation> neighbors = getAndCheckNeighbors(currState.pathCost + 1, currState, goal, xExtent, yExtent, enemyFootmanLoc, resourceLocations);
         	
         	for (MapLocation n : neighbors) {
-        		
-        		
-        		// NOTE: Everything seemed to be working without the iterative checks!
-        		
-        		boolean skip = false;
-        		
-        		// CHECK IF n IN toCheck LIST, if it has a lower total cost than n, skip n
-        		Iterator<MapLocation> toChkIter = toCheck.iterator();
-        		
-				while (toChkIter.hasNext()) {
-					MapLocation node = toChkIter.next();
-					if (node.equals(n) && node.cost < n.cost) {
-						skip = true;
-					}
-				}
+        		System.out.println(n);
 				
-				if (!skip) {
-					// CHECK IF n IN checked LIST, if it has a lower total cost than n, skip n
-					Iterator<MapLocation> chkdIter = checked.iterator();
+				if (!checked.contains(n)) {
 					
-					while (chkdIter.hasNext()) {
-						MapLocation node = chkdIter.next();
-						if (node.equals(n) && node.cost < n.cost) {
-							skip = true;
+					
+					// neighbor n is NOT finalized so we can do something with this path
+					
+					// n could be a brand new vertex (and therefore a brand new path)
+					// OR n could have already been visted before BUT not finalized
+					if(!mapLocToBestCost.containsKey(n))
+					{
+						// n is a brand new vertex!
+						toCheck.add(n);
+				    	mapLocToBestCost.put(n,n.pathCost);
+					} else
+					{
+						// we have a competitor path (there exists a path in the heap with the same destination as n)
+						// aka TWO paths that go to n with (potentially) two different path costs
+
+						// get the path cost of the already existing path to n
+						// compare that path cost to our path cost (i.e. n.pathCost)
+						// and keep the path with the smallest cost
+						
+						// question. When do we actually have to do anything to our data structures?
+						
+						int oldPathCost = mapLocToBestCost.get(n);
+						int newPathCost = n.pathCost;
+						
+						if (newPathCost < oldPathCost) {
+							// remove old path from heap 
+							toCheck.remove(n);
+							
+							// add superior contesting path
+							toCheck.add(n);
+							
+							// Update map
+							mapLocToBestCost.put(n,n.pathCost);
 						}
+						
 					}
-				}
-        		
-				// Add neighbor to toCheck list if conditions are met
-				if (!skip) {
-	            	toCheck.add(n);        		
 				}
         	}
         	
+        	System.out.println("Next in toCheck:");
         	System.out.println(toCheck.size());
         	System.out.println(toCheck.peek());
         	
-        	checked.add(currState);
     	}
     	
     	// Stack to return
@@ -445,7 +488,7 @@ public class AStarAgent extends Agent {
     		System.out.println("No solutions found :(");
     	} else {
     		// Get path!	
-        	path = tracePath(start, finalState, new Stack<MapLocation>());
+        	path = tracePath(start, finalState.cameFrom, new Stack<MapLocation>());
     		System.out.println(path);
        	}
  
@@ -506,8 +549,8 @@ public class AStarAgent extends Agent {
     			{ //run from pt.y-1 -> pt.y+1
     				if(i != pt.x || j != pt.y)
     				{ //if we aren't at (pt.x, pt.y)
-    					newPt = new MapLocation(i, j, pt, pathCost + this.heuristic(i, j, goal), pt.pathCost + 1); //neighbor point
-            
+    					newPt = new MapLocation(i, j, pt, (int)(pathCost + this.heuristic(i, j, goal))); //neighbor point
+    					
     					//if the point is valid (not occupied and in range)
     					if(newPt.x >= 0 && newPt.x < xExtent && newPt.y >= 0 && newPt.y < yExtent
     							&& !obstacles.contains(newPt))
@@ -525,8 +568,8 @@ public class AStarAgent extends Agent {
     			{ //run from pt.y-1 -> pt.y+1
     				if(i != pt.x || j != pt.y)
     				{ //if we arent at (pt.x, pt.y)
-    					newPt = new MapLocation(i, j, pt, pathCost + this.heuristic(i, j, goal), pt.pathCost + 1); //neighbor point
-         
+    					newPt = new MapLocation(i, j, pt, (int)(pathCost + this.heuristic(i, j, goal))); //neighbor point
+    					
     					//if the point is valid (not occupied and in range)
     					if(newPt.x >= 0 && newPt.x < xExtent && newPt.y >= 0 && newPt.y < yExtent && 
     							!(newPt.x == enemy.x && newPt.y == enemy.y) && !obstacles.contains(newPt))
