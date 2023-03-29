@@ -1,3 +1,7 @@
+// Names: Ryan Yap & Hasan Mustafabayli
+// BUIDs: U16352391 & U15717216
+
+
 package hw1;
 
 import edu.cwru.sepia.action.Action;
