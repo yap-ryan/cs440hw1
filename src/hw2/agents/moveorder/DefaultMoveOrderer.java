@@ -13,6 +13,8 @@ public class DefaultMoveOrderer
 	 * this is not a good rule in general, and we may want to make it move-specific OR start incorporating some custom heuristics
 	 * @param nodes. The nodes to order (these are children of a DFSTreeNode) that we are about to consider in the search.
 	 * @return The ordered nodes.
+	 * 
+	 * 
 	 */
 	public static List<DFSTreeNode> order(List<DFSTreeNode> nodes)
 	{

@@ -31,7 +31,7 @@ public class Pawn extends Piece
 
 	private boolean isOnStartingRow(Board board)
 	{
-		return board.getPiecePosition(this.getPlayer(), this.getPieceID()).getXPosition() == board.getPawnStartingRowIdx(this.getPlayer());
+		return board.getPiecePosition(this.getPlayer(), this.getPieceID()).getYPosition() == board.getPawnStartingRowIdx(this.getPlayer());
 	}
 
 	/**

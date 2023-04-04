@@ -31,7 +31,7 @@ public class Board extends Object
 		public static final int NUMPIECESPERTEAM = 16;
 		public static final int NUMPIECES = Constants.NUMPIECESPERTEAM * 2;
 	
-		public static final int WHITESTARTINGPAWNROWIDX = Constants.NROWS - 3;
+		public static final int WHITESTARTINGPAWNROWIDX = Constants.NROWS - 1;
 		public static final int BLACKSTARTINGPAWNROWIDX = 2;
 	
 		public static final int WHITEROWIDXFORPROMOTION = 1;

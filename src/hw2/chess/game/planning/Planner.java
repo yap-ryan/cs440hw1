@@ -6,6 +6,7 @@ import java.util.Stack;
 import edu.cwru.sepia.action.Action;
 import edu.cwru.sepia.environment.model.state.State.StateView;
 import hw2.chess.game.Game;
+import hw2.chess.game.history.History;
 import hw2.chess.game.move.Move;
 import hw2.chess.game.move.MoveType;
 import hw2.chess.game.piece.PieceType;
@@ -75,6 +76,8 @@ public class Planner extends BasePlanner
 		{
 			this.currentMove = move;
 			this.currentGame = game;
+			
+			History.getHistory().addState(move, game);
 
 			this.currentPlan = TypeConverter.listToStack(this.makeCommands(move, game));
 		}

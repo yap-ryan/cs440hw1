@@ -19,17 +19,29 @@ import edu.cwru.sepia.environment.model.state.State.StateView;
 import hw2.agents.heuristics.CustomHeuristics;
 import hw2.chess.agents.ChessAgent;
 import hw2.chess.game.Game;
+import hw2.chess.game.move.CaptureMove;
+import hw2.chess.game.move.CastleMove;
 import hw2.chess.game.move.Move;
+import hw2.chess.game.move.MovementMove;
+import hw2.chess.game.move.PromotePawnMove;
+import hw2.chess.game.piece.Piece;
 import hw2.chess.game.planning.Planner;
 import hw2.chess.game.player.Player;
 import hw2.chess.game.player.PlayerType;
 import hw2.chess.search.DFSTreeNode;
 import hw2.chess.search.DFSTreeNodeType;
+import hw2.chess.streaming.ConsoleStreamer;
 import hw2.chess.streaming.Streamer;
+import hw2.chess.utils.Coordinate;
+import hw2.chess.utils.Distance;
 import hw2.chess.utils.Pair;
+import hw2.agents.moveorder.*;
 
 public class AlphaBetaAgent extends ChessAgent
 {
+	
+	// Map each move to the number of times it appears, the more repetitions, lower the heuristic value
+	public HashMap<Move, Integer> prevMoves = new HashMap<Move, Integer>();
 
 	private class AlphaBetaSearcher extends Object implements Callable<Pair<Move, Long> >
 	{
@@ -45,6 +57,7 @@ public class AlphaBetaAgent extends ChessAgent
 
 		public DFSTreeNode getRootNode() { return this.rootNode; }
 		public int getMaxDepth() { return this.maxDepth; }
+		
 
 		/**
 		 * TODO: implement me!
@@ -57,7 +70,6 @@ public class AlphaBetaAgent extends ChessAgent
 		 */
 		public DFSTreeNode alphaBetaSearch(DFSTreeNode node, int depth, double alpha, double beta)
 		{
-			
 			// Use default heuristics first
 			
 			DFSTreeNode bestChild = null;
@@ -71,6 +83,10 @@ public class AlphaBetaAgent extends ChessAgent
 			} else  // Search this node's children & find the best value
 			{
 				List<DFSTreeNode> children = node.getChildren();
+				
+//				children = CustomMoveOrderer.order(children);
+//				children = DefaultMoveOrderer.order(children);
+				
 				
 				// MAX PLAYER TURN
 				if (node.getType() == DFSTreeNodeType.MAX) {
@@ -122,12 +138,17 @@ public class AlphaBetaAgent extends ChessAgent
 		public Pair<Move, Long> call() throws Exception
 		{
 			Move move = null;
+			
+			double timeLeft = this.getRootNode().getGame().getTimeLeftInMS(this.getRootNode().getMaxPlayer());
+			
+			
 
 			double startTime = System.nanoTime();
 			move = this.alphaBetaSearch(this.getRootNode(), this.getMaxDepth(),
 					Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY).getMove();
+			
 			double endTime = System.nanoTime();
-
+						
 			return new Pair<Move, Long>(move, (long)((endTime-startTime)/1000000));
 		}
 		
@@ -139,7 +160,7 @@ public class AlphaBetaAgent extends ChessAgent
 	 * TODO: please set me! This is what we will use for your submission...you get to pick your own depth param!
 	 * You can also change this is the xml file, however if you don't provide one in the xml file we use this default value
 	 */
-	private static final int DEFAULTMAXDEPTH = 2;
+	private static final int DEFAULTMAXDEPTH = 3;
 
 	private final int maxDepth;
 	private final long maxPlaytimeInMS;
@@ -342,8 +363,7 @@ public class AlphaBetaAgent extends ChessAgent
 
 	@Override
 	public void terminalStep(StateView state, HistoryView history)
-	{
+	{		
 		// TODO Auto-generated method stub
 	}
-
 }
