@@ -9,6 +9,8 @@ import hw2.agents.heuristics.CustomHeuristics.DefensiveHeuristics;
 import hw2.chess.game.move.MoveType;
 import hw2.chess.search.DFSTreeNode;
 
+//Names: Ryan Yap & Hasan Mustafabayli
+//BUIDs: U16352391 & U15717216
 public class CustomMoveOrderer
 {
 

@@ -37,6 +37,8 @@ import hw2.chess.utils.Distance;
 import hw2.chess.utils.Pair;
 import hw2.agents.moveorder.*;
 
+// Names: Ryan Yap & Hasan Mustafabayli
+//BUIDs: U16352391 & U15717216
 public class AlphaBetaAgent extends ChessAgent
 {
 	

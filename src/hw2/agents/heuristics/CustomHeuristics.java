@@ -17,6 +17,8 @@ import hw2.chess.game.player.Player;
 import hw2.chess.search.DFSTreeNode;
 import hw2.chess.utils.Coordinate;
 
+//Names: Ryan Yap & Hasan Mustafabayli
+//BUIDs: U16352391 & U15717216
 public class CustomHeuristics
 {	
 	
