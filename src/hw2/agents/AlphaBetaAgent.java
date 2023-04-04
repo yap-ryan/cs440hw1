@@ -57,7 +57,6 @@ public class AlphaBetaAgent extends ChessAgent
 
 		public DFSTreeNode getRootNode() { return this.rootNode; }
 		public int getMaxDepth() { return this.maxDepth; }
-		
 
 		/**
 		 * TODO: implement me!
@@ -66,12 +65,10 @@ public class AlphaBetaAgent extends ChessAgent
 		 * @param depth how far in the tree we are rn
 		 * @param alpha
 		 * @param beta
-		 * @return RETURN BEST CHILD ??
+		 * @return RETURN BEST CHILD
 		 */
 		public DFSTreeNode alphaBetaSearch(DFSTreeNode node, int depth, double alpha, double beta)
-		{
-			// Use default heuristics first
-			
+		{			
 			DFSTreeNode bestChild = null;
 			
 			if(node.isTerminal() || depth <= 0) // terminal state or we've hit max depth!
@@ -84,9 +81,7 @@ public class AlphaBetaAgent extends ChessAgent
 			{
 				List<DFSTreeNode> children = node.getChildren();
 				
-//				children = CustomMoveOrderer.order(children);
-//				children = DefaultMoveOrderer.order(children);
-				
+				children = CustomMoveOrderer.order(children);				
 				
 				// MAX PLAYER TURN
 				if (node.getType() == DFSTreeNodeType.MAX) {

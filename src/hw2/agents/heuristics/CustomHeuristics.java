@@ -117,6 +117,7 @@ public class CustomHeuristics
 			return numPiecesThreateningMaxPlayer;
 		}
 		
+		// Calculate the points of alive pieces to get a more accurate reading of the value of our board
 		public static int getPointsOfAlivePieces(DFSTreeNode node)
 		{
 			int ptsPiecesAlive = 0;
@@ -146,6 +147,7 @@ public class CustomHeuristics
 		default:
 			break;
 		}
+		
 		// offense can typically include the number of pieces that our pieces are currently threatening
 		int numPiecesWeAreThreatening = OffensiveHeuristics.getNumberOfPiecesThreateningMinPlayer(node);
 		
@@ -153,21 +155,16 @@ public class CustomHeuristics
 
 		double nPWARWeight = 2;
 		double dDITNWeight = numMinPieces < 6 ? 1.5 : 1.2;
-		double nMPWeight = 0;
-//		double nMPWeight = numMinPieces < 6 ? 10 : 0;
-
+		// Increase "damage done" weight depending on if the enemy is low on pieces (go offensive when the enemy when they are weak)
 		
 //		System.out.println("Damage Dealt: " + damageDealtInThisNode + " weighted: " + damageDealtInThisNode*dDITNWeight);
 //		System.out.println("# Pieces we are threatening: " + numPiecesWeAreThreatening + " weighted: " + numPiecesWeAreThreatening*nPWARWeight);
 
-		return (damageDealtInThisNode*dDITNWeight) + (numPiecesWeAreThreatening*nPWARWeight) - (numMinPieces*nMPWeight);
+		return (damageDealtInThisNode*dDITNWeight) + (numPiecesWeAreThreatening*nPWARWeight);
 	}
 
 	public static double getDefensiveHeuristicValue(DFSTreeNode node)
-	{
-		// how many pieces exist on our team?
-//		int numPiecesAlive = DefensiveHeuristics.getNumberOfMaxPlayersAlivePieces(node);
-		
+	{		
 		double numMinPieces = DefensiveHeuristics.getNumberOfMinPlayersAlivePieces(node);
 		double numMaxPieces = DefensiveHeuristics.getNumberOfMaxPlayersAlivePieces(node);
 		
@@ -233,31 +230,33 @@ public class CustomHeuristics
 //				System.out.println(m);
 					
 					if (((MovementMove)currMove).getActorPieceID() == ((MovementMove)m).getActorPieceID()) {
+						// A recent move has been made by the same piece!
 						pieceFreq ++;
 						if (((MovementMove)currMove).getTargetPosition().equals(((MovementMove)m).getTargetPosition())) {
+							// A recent move has been made by the same piece & to the same position
 							repFreq ++;
 						}
 					}
-					
 				}
-
 			}
 		}
 		
+		// If a move was made the same position, heavily tax the heuristic
 		if (repFreq > 0) {
 //			System.out.println("Repeat Freq: " + repFreq);
 			heuristic = - (Math.pow(4, repFreq));
 		}
 		
+		// If a move was made by same piece, tax the heuristic
 		if (pieceFreq > 0) {
 			heuristic -= Math.pow(2.7,pieceFreq);
 		}
 		
 //		System.out.println("REPEAT HEURISTIC: " + heuristic);
-				
 		return heuristic;
 	}
 	
+	// Heuristic to encourage pawns to advance when we have more pieces
 	public static double getPawnHeuristic(DFSTreeNode node) {
 		double heuristic = 0;
 		
